@@ -1,0 +1,90 @@
+CONTEXT EmploymentPrincipleFormalization IN ENGLISH
+PURPOSE CONTEXT EmploymentPrincipleFormalization
+{+ This context formalizes the principles of `Employment.adl`, such that you can switch them `on` and `off`.+}
+
+CONCEPT Principle "a (human readable) criterion that, if accepted by the organization, must be complied with"
+CONCEPT RuleID "a text that identifies a particular formalization (rule) of a Principle"
+
+RELATION rulePrinciple[RuleID*Principle] [INJ,SUR,UNI,TOT] MEANING "{{SRC}} is an identifier for principle {{TGT}}"
+POPULATION rulePrinciple[RuleID*Principle] CONTAINS
+[ ("B1", "The board must oversee all departments")
+, ("D1", "Departments must have precisely one manager")
+, ("D2", "Departments must list the functions for which they have positions")
+, ("D3", "Departments must have employees")
+, ("D4", "Everyone that works for a department must be an employee (have a contract)")
+, ("E1", "All employees must have one function")
+, ("E2", "n employee that has been assigned a function must have the associated qualifications")
+, ("E3", "All employees must be assigned to a department for which their function is relevant")
+, ("R1", "People must not report to themselves")
+, ("R2", "All employees that are not the department manager must report to their department manager")
+, ("R3", "Managers must report to the board member that oversees his department")
+]
+
+RELATION isAccepted[RuleID] [PROP] MEANING "The rule with ID {{TGT}} has been accepted and therefor must be complied with"
+-- POPULATION isAccepted[RuleID*RuleID] CONTAINS
+-- [ ("B1","B1") 
+-- , ("D1","D1"), ("D2","D2"), ("D3","D3"), ("D4","D4")
+-- , ("E1","E1"), ("E2","E2"), ("E3","E3")
+-- , ("R1","R1"), ("R2","R2"), ("R3","R3")
+-- ]
+
+--[Principles: Board and organization structure]
+
+RULE "P-B1: The board must oversee all departments":
+   V;isAccepted;"B1";V /\ I[Department] |- oversees~;boardMember;V
+
+--[Principles: Departments]
+
+RULE "P-D1: Departments must have precisely one manager":
+   V;isAccepted;"D1";V /\ I[Department] |- deptManager;deptManager~
+
+RULE "P-D2: Departments must list the functions for which they have positions":
+   V;isAccepted;"D2";V /\ deptFunction |- deptFunction;-I 
+MEANING "Each department must have at least two different functions specified. It is assumed that one of them is `Manager`."
+
+RULE "P-D3: Departments must have employees":
+   V;isAccepted;"D3";V /\ I[Department] |- emplDepartment~;emplDepartment
+
+RULE "P-D4: Everyone that works for a department must be an employee (have a contract)":
+   V;isAccepted;"D4";V /\ emplDepartment |- employee;emplDepartment
+
+--[Principles: Employees]
+
+RULE "P_E1: All employees must have one function":
+   V;isAccepted;"E1";V /\ employee |- emplFunction;emplFunction~ /\ -(emplFunction;-I;emplFunction~)
+
+RULE "P_E2 An employee that has been assigned a function must have the associated qualifications":
+   V;isAccepted;"E2";V /\ emplFunction |- isQualifiedFor
+
+RULE "P_E3: All employees must be assigned to a department for which their function is relevant":
+   V;isAccepted;"E3";V /\ emplDepartment~;emplFunction |- deptFunction
+
+--[Principles: Reporting]
+
+RULE "P_R1: People must not report to themselves":
+   V;isAccepted;"R1";V /\ reportsTo |- -I[Person]
+
+-- RULE "P_R2: Employees must report to their manager":
+--    emplDepartment;deptManager |- reportsTo
+
+RULE "P_R2: All employees that are not the department manager must report to their department manager":
+   V;isAccepted;"R2";V /\ (emplDepartment-deptManager~);deptManager |- reportsTo
+
+-- RULE "P_R3: Managers must report to a member of the board":
+--    deptManager~ |- reportsTo;boardMember;V
+
+RULE "P_R3: Managers must report to the board member that oversees his department":
+   V;isAccepted;"R3";V /\ (oversees;deptManager)~ |- reportsTo
+
+-----------------------------------------
+--[DEFINING INTERFACES FOR THE PROTOTYPE]
+-----------------------------------------
+
+INTERFACE "Principle Acceptance": V[ONE*RuleID] cRud
+BOX<TABLE>
+   [ "Accept?": isAccepted
+   , "ID": I[RuleID] cRud
+   , "Principle": rulePrinciple cRud
+   ]
+
+ENDCONTEXT

@@ -1,0 +1,284 @@
+CONTEXT Employment IN ENGLISH
+PURPOSE CONTEXT Employment
+{+ This context looks at the employment of people within 'Our Organization'.
+   This means that we do not consider anything outside of 'Our Organization'
++}
+
+--[Definitions for Concepts]
+
+CONCEPT Person     "a human being"
+CONCEPT Department "a functional unit within an organization that is being managed."
+CONCEPT Function   "a job position or title that employees can hold."
+
+--[Definitions for Relations]
+
+RELATION boardMember[Person] [PROP]        MEANING "{{SRC}} is a member of the board of the organization"
+RELATION oversees[Person*Department]       MEANING "{{SRC}} oversees department {{TGT}}"
+
+RELATION deptManager[Department*Person]    MEANING "{{SRC}} has {{TGT}} as its manager"
+RELATION deptFunction[Department*Function] MEANING "{{SRC}} has job positions for employees that can fulfill {{TGT}}"
+
+RELATION isQualifiedFor[Person*Function]   MEANING "{{SRC}} has been qualified to fulfill funtion {{TGT}}"
+RELATION employee[Person] [PROP]           MEANING "{{SRC}} has a working relationship/contract with our organization"
+RELATION emplDepartment[Person*Department] MEANING "{{SRC}} works in department {{TGT}} of the organization"
+RELATION emplFunction[Person*Function]     MEANING "{{SRC}} has been assigned the function {{TGT}}"
+RELATION reportsTo[Person*Person]          MEANING "{{SRC}} reports to {{TGT}}"
+
+--[Principles: Board and organization structure]
+
+PURPOSE RULE "P-B1: The board must oversee all departments"
+{+In order to be in control, every deparment must be overseen by a member of the board - no exceptions.+}
+
+--[Principles: Departments]
+
+PURPOSE RULE "P-D1: Departments must have precisely one manager"
+{+Departments must be led/managed. The responsibility for doing so must be assigned to a single person,
+to ensure that it is always unambiguously clear who it is that bears that responsibility.+}
+
+PURPOSE RULE "P-D2: Departments must list the functions for which they have positions"
+{+Hiring people that can do the work in a department (a functional unit) becomes easier if sets of
+  capabilities are specified (Functions) that the deparment needs to get its work done. 
+  Therefore, departments should list the functions for which they have job positions.+}
+
+PURPOSE RULE "P-D3: Departments must have employees"
+{+A department that doesn't have employees cannot do work.+}
+
+PURPOSE RULE "P-D4: Everyone that works for a department must be an employee (have a contract)"
+{+In order to make sure that people working in one of our organization's departments are well-behaved,
+  they must be employees, which implies they have signed a contract that provides appropriate guarantees for that.+}
+
+--[Principles: Employees]
+
+PURPOSE RULE "P_E1: All employees must have one function"
+{+In order to not overload employees, it has been decided that they can have at most one function.+}
+
+PURPOSE RULE "P_E2 An employee that has been assigned a function must have the associated qualifications"
+{+People should only be employed to fulfill a function if they can do the associated work.
+  Therefore, it must have been established that they can do the work if they are assigned a function.+}
+
+PURPOSE RULE "P_E3: All employees must be assigned to a department for which their function is relevant"
+{+In order to guarantee that people end up in a department that can use the capabilities 
+  for which they are qualified, people should only be assigned to deparments that can use those.+}
+
+--[Principles: Reporting]
+
+PURPOSE RULE "P_R1: People must not report to themselves"
+{+Butchers should not judge their own meat, and similarly, people must not report to themselves.+}
+
+-- PURPOSE RULE "P_R2: Employees must report to their manager"
+-- {+In order not to overload people with red tape, people must report to at most one person.+}
+
+PURPOSE RULE "P_R2: All employees that are not the department manager must report to their department manager"
+{+The easiest reporting line for employees is to report to their department manager (provided they are not the manager themselves).+}
+
+-- PURPOSE RULE "P_R3: Managers must report to a member of the board"
+-- {+To ensure that the board can oversee all departments, each manager must report to some member of the board.+}
+
+PURPOSE RULE "P_R3: Managers must report to the board member that oversees his department"
+{+Since the board has decided to assign departments to its members to oversee, it makes sense 
+  to have the managers of these departments report to the board member that oversees his/her department.+}
+
+------------------------------------------------
+--[FORMALIZING THE PRINCIPLES (USING AMPERSAND)]
+------------------------------------------------
+--#IF demo
+   INCLUDE "employment-demo.adl"
+--#ELSE
+
+--[Principles: Board and organization structure]
+
+RULE "P-B1: The board must oversee all departments":
+   I[Department] |- oversees~;boardMember;V
+
+--[Principles: Departments]
+
+RULE "P-D1: Departments must have precisely one manager":
+   I[Department] |- deptManager;deptManager~
+
+RULE "P-D2: Departments must list the functions for which they have positions":
+   deptFunction |- deptFunction;-I 
+MEANING "Each department must have at least two different functions specified. It is assumed that one of them is `Manager`."
+
+RULE "P-D3: Departments must have employees":
+   I[Department] |- emplDepartment~;emplDepartment
+
+RULE "P-D4: Everyone that works for a department must be an employee (have a contract)":
+   emplDepartment |- employee;emplDepartment
+
+--[Principles: Employees]
+
+RULE "P_E1: All employees must have one function":
+   employee |- emplFunction;emplFunction~ /\ -(emplFunction;-I;emplFunction~)
+
+RULE "P_E2 An employee that has been assigned a function must have the associated qualifications":
+   emplFunction |- isQualifiedFor
+
+RULE "P_E3: All employees must be assigned to a department for which their function is relevant":
+   emplDepartment~;emplFunction |- deptFunction
+
+--[Principles: Reporting]
+
+RULE "P_R1: People must not report to themselves":
+   reportsTo |- -I[Person]
+
+-- RULE "P_R2: Employees must report to their manager":
+--    emplDepartment;deptManager |- reportsTo
+
+RULE "P_R2: All employees that are not the department manager must report to their department manager":
+   (emplDepartment-deptManager~);deptManager |- reportsTo
+
+-- RULE "P_R3: Managers must report to a member of the board":
+--    deptManager~ |- reportsTo;boardMember;V
+
+RULE "P_R3: Managers must report to the board member that oversees his department":
+   (oversees;deptManager)~ |- reportsTo
+
+--#ENDIF
+
+-----------------------------------------
+--[DEFINING INTERFACES FOR THE PROTOTYPE]
+-----------------------------------------
+
+INTERFACE "Board": V[SESSION*Person];boardMember CRud
+BOX <TABLE>
+   [ "Board member" : I[Person]     cRud
+   , "Oversees" : oversees          CRUD
+   , "Rep. Mgrs." : reportsTo~      CRUD
+   , "Qualified for": isQualifiedFor cRud
+   ]
+
+INTERFACE "Departments": V[SESSION*Department] cRuD 
+BOX <TABLE>
+   [ "Department" : I[Department]   CRuD
+   , "Manager" : deptManager        CRUD
+   , "Employees" : emplDepartment~  CRUD
+   , "Functions" : deptFunction     CRUD
+   ]
+
+INTERFACE "Functions": V[SESSION*Function] cRud 
+BOX <TABLE>
+   [ "Function" : I[Function]       CRuD
+   , "Departments" : deptFunction~  cRUd
+   , "Employees" : emplFunction~    cRUd
+   ]
+
+INTERFACE "Employees": V[SESSION*Person];employee cRud 
+BOX <TABLE>
+   [ "Name" : I[Person]              CRuD
+   , "Department" : emplDepartment   cRUd
+   , "Function" : emplFunction       cRUd
+   , "Reports to": reportsTo         cRUd
+   , "Qualified for": isQualifiedFor cRUd
+   ]
+
+INTERFACE "Other people": V[SESSION*Person] cRud 
+BOX <TABLE>
+   [ "Name" : I[Person]              CRuD
+   , "Board member?" : boardMember   cRUd
+   , "Function" : emplFunction       cRUd
+   , "Reports to": reportsTo         cRUd 
+   , "Qualified for": isQualifiedFor cRUd
+   ]
+
+INTERFACE "My Organization": "_SESSION"          cRud
+BOX <TABS>
+   [ "The Board":            I[SESSION] INTERFACE "Board"
+   , "Departments":          I[SESSION] INTERFACE "Departments"
+   , "Functions":            I[SESSION] INTERFACE "Functions"
+   , "Employees":            I[SESSION] INTERFACE "Employees"
+   , "Other people":         I[SESSION] INTERFACE "Other people"
+--#IF demo
+   , "Principle Acceptance": I[SESSION] INTERFACE "Principle Acceptance"
+--#ENDIF
+   ]
+
+------------------------------------------------
+--[SPECIFYING A TEST POPULATION]
+------------------------------------------------
+
+--[The Board]
+
+POPULATION boardMember[Person*Person] CONTAINS
+   [ ("Boris", "Boris"), ("Birgit", "Birgit"), ("Bram", "Bram") ]
+
+POPULATION oversees[Person*Department] CONTAINS
+   [ ("Boris", "Finance")
+   , ("Birgit", "Operations")
+   , ("Bram", "Support") 
+   ]
+
+--[Departments]
+
+POPULATION deptManager[Department*Person] CONTAINS
+   [ ("Finance","Alice")
+   , ("Operations","Darryl")
+   , ("Support","George")
+   ]
+
+POPULATION deptFunction[Department*Function] CONTAINS
+   [ ("Finance","Manager"), ("Finance","Controller"), ("Finance","Administrator")
+   , ("Operations","Manager"), ("Operations","Operator")
+   , ("Support","Manager"), ("Support","Support engineer")
+   ]
+
+--[Employees]
+
+POPULATION employee[Person*Person] CONTAINS
+   [ ("Alice","Alice")
+   , ("Bob","Bob")
+   , ("Charlie","Charlie")
+   , ("Darryl","Darryl") 
+   , ("Evert","Evert")
+   , ("Flora","Flora")
+   , ("George","George")
+   , ("Harry","Harry")
+   ]
+
+POPULATION emplDepartment[Person*Department] CONTAINS
+   [ ("Alice","Finance")
+   , ("Bob","Finance")
+   , ("Charlie","Finance")
+   , ("Darryl","Operations")
+   , ("Evert","Operations")
+   , ("Flora","Operations")
+   , ("George","Support")
+   , ("Harry","Support")
+   ]
+
+POPULATION isQualifiedFor[Person*Function] CONTAINS
+   [ ("Alice","Manager"), ("Alice","Controller"), ("Alice","Administrator")
+   , ("Bob","Controller"), ("Bob","Administrator")
+   , ("Charlie","Administrator")
+   , ("Darryl","Manager"), ("Darryl","Operator")
+   , ("Evert","Operator")
+   , ("Flora", "Operator")
+   , ("George","Manager"), ("George","Controller")
+   , ("Harry","Support engineer"), ("Harry","Operator")
+   , ("Irene","Manager"), ("Irene","Controller")
+   , ("John","Operator"), ("John","Support Engineer")
+   , ("Karel","CISO"), ("Karel","Security Officer")
+   ]
+
+POPULATION emplFunction[Person*Function] CONTAINS
+   [ ("Alice","Manager")
+   , ("Bob","Controller")
+   , ("Charlie","Administrator")
+   , ("Darryl","Manager")
+   , ("Evert","Operator")
+   , ("Flora", "Operator")
+   , ("George","Manager")
+   , ("Harry","Support engineer")
+   ]
+
+POPULATION reportsTo[Person*Person] CONTAINS
+   [ ("Alice","Boris")
+   , ("Bob","Alice")
+   , ("Charlie","Alice")
+   , ("Darryl","Birgit")
+   , ("Evert","Darryl")
+   , ("Flora", "Darryl")
+   , ("George","Bram")
+   , ("Harry","George")
+   ]
+
+ENDCONTEXT
