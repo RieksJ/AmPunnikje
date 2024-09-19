@@ -29,6 +29,13 @@ RELATION reportsTo[Person*Person]          MEANING "{{SRC}} reports to {{TGT}}"
 PURPOSE RULE "P-B1: The board must oversee all departments"
 {+In order to be in control, every deparment must be overseen by a member of the board - no exceptions.+}
 
+PURPOSE RULE "P-B2: Only department managers report to board members"
+{+In order to ensure the workload of board members is limited, only department managers may report to the board.+}
+
+PURPOSE RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member."
+{+Proper reporting to the board means that the board members that oversee a department will be reported to by its manager.
+  Also, each such manager must report to the board member that oversees its department.+}
+
 --[Principles: Departments]
 
 PURPOSE RULE "P-D1: Departments must have precisely one manager"
@@ -90,6 +97,12 @@ PURPOSE RULE "P_R3: Managers must report to the board member that oversees his d
 RULE "P-B1: The board must oversee all departments":
    I[Department] |- oversees~;boardMember;V
 
+RULE "P-B2: Only department managers report to board members":
+   reportsTo;boardMember |- deptManager~;V
+
+RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member.":
+   reportsTo;boardMember = (oversees;deptManager)~
+
 --[Principles: Departments]
 
 RULE "P-D1: Departments must have precisely one manager":
@@ -139,56 +152,56 @@ RULE "P_R3: Managers must report to the board member that oversees his departmen
 --[DEFINING INTERFACES FOR THE PROTOTYPE]
 -----------------------------------------
 
-INTERFACE "Board": V[SESSION*Person];boardMember CRud
+INTERFACE "Board":V[ONE*Person];boardMember
 BOX <TABLE>
-   [ "Board member" : I[Person]     cRud
-   , "Oversees" : oversees          CRUD
-   , "Rep. Mgrs." : reportsTo~      CRUD
-   , "Qualified for": isQualifiedFor cRud
+   [ "Board member" : I[Person]
+   , "Oversees" : oversees
+   , "Rep. Mgrs." : reportsTo~
+   , "Qualified for": isQualifiedFor
    ]
 
-INTERFACE "Departments": V[SESSION*Department] cRuD 
+INTERFACE "Departments":V[ONE*Department] 
 BOX <TABLE>
-   [ "Department" : I[Department]   CRuD
-   , "Manager" : deptManager        CRUD
-   , "Employees" : emplDepartment~  CRUD
-   , "Functions" : deptFunction     CRUD
+   [ "Department" : I[Department]
+   , "Manager" : deptManager
+   , "Employees" : emplDepartment~
+   , "Functions" : deptFunction
    ]
 
-INTERFACE "Functions": V[SESSION*Function] cRud 
+INTERFACE "Functions":V[ONE*Function] 
 BOX <TABLE>
-   [ "Function" : I[Function]       CRuD
-   , "Departments" : deptFunction~  cRUd
-   , "Employees" : emplFunction~    cRUd
+   [ "Function" : I[Function]
+   , "Departments" : deptFunction~
+   , "Employees" : emplFunction~
    ]
 
-INTERFACE "Employees": V[SESSION*Person];employee cRud 
+INTERFACE "Employees":V[ONE*Person];employee 
 BOX <TABLE>
-   [ "Name" : I[Person]              CRuD
-   , "Department" : emplDepartment   cRUd
-   , "Function" : emplFunction       cRUd
-   , "Reports to": reportsTo         cRUd
-   , "Qualified for": isQualifiedFor cRUd
+   [ "Name" : I[Person]
+   , "Department" : emplDepartment
+   , "Function" : emplFunction
+   , "Reports to": reportsTo
+   , "Qualified for": isQualifiedFor
    ]
 
-INTERFACE "Other people": V[SESSION*Person] cRud 
+INTERFACE "Other people":V[ONE*Person] 
 BOX <TABLE>
-   [ "Name" : I[Person]              CRuD
-   , "Board member?" : boardMember   cRUd
-   , "Function" : emplFunction       cRUd
-   , "Reports to": reportsTo         cRUd 
-   , "Qualified for": isQualifiedFor cRUd
+   [ "Name" : I[Person]
+   , "Board member?" : boardMember
+   , "Function" : emplFunction
+   , "Reports to": reportsTo 
+   , "Qualified for": isQualifiedFor
    ]
 
-INTERFACE "My Organization": "_SESSION"          cRud
+INTERFACE "My Organization": "_SESSION";V[SESSION*ONE] cRud
 BOX <TABS>
-   [ "The Board":            I[SESSION] INTERFACE "Board"
-   , "Departments":          I[SESSION] INTERFACE "Departments"
-   , "Functions":            I[SESSION] INTERFACE "Functions"
-   , "Employees":            I[SESSION] INTERFACE "Employees"
-   , "Other people":         I[SESSION] INTERFACE "Other people"
+   [ "The Board":            I INTERFACE "Board"
+   , "Departments":          I INTERFACE "Departments"
+   , "Functions":            I INTERFACE "Functions"
+   , "Employees":            I INTERFACE "Employees"
+   , "Other people":         I INTERFACE "Other people"
 --#IF demo
-   , "Principle Acceptance": I[SESSION] INTERFACE "Principle Acceptance"
+   , "Principle Acceptance": I INTERFACE "Principle Acceptance"
 --#ENDIF
    ]
 
