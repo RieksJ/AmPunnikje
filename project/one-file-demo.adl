@@ -29,6 +29,13 @@ RELATION reportsTo[Person*Person]          MEANING "{{SRC}} reports to {{TGT}}"
 PURPOSE RULE "P-B1: The board must oversee all departments"
 {+In order to be in control, every deparment must be overseen by a member of the board - no exceptions.+}
 
+PURPOSE RULE "P-B2: Only department managers report to board members"
+{+In order to ensure the workload of board members is limited, only department managers may report to the board.+}
+
+PURPOSE RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member."
+{+Proper reporting to the board means that the board members that oversee a department will be reported to by its manager.
+  Also, each such manager must report to the board member that oversees its department.+}
+
 --[Principles: Departments]
 
 PURPOSE RULE "P-D1: Departments must have precisely one manager"
@@ -89,22 +96,38 @@ RELATION isAccepted[RuleID] [PROP] MEANING "The rule with ID {{TGT}} has been ac
 RELATION rulePrinciple[RuleID*Principle] [INJ,SUR,UNI,TOT] MEANING "{{SRC}} is an identifier for principle {{TGT}}"
 POPULATION rulePrinciple[RuleID*Principle] CONTAINS
 [ ("B1", "The board must oversee all departments")
+, ("B2", "Only department managers report to board members")
+, ("B3", "Only the managers of departments that are overseen by a particular board member may, and must report to that board member.")
 , ("D1", "Departments must have precisely one manager")
 , ("D2", "Departments must list the functions for which they have positions")
 , ("D3", "Departments must have employees")
 , ("D4", "Everyone that works for a department must be an employee (have a contract)")
 , ("E1", "All employees must have one function")
-, ("E2", "n employee that has been assigned a function must have the associated qualifications")
+, ("E2", "An employee that has been assigned a function must have the associated qualifications")
 , ("E3", "All employees must be assigned to a department for which their function is relevant")
 , ("R1", "People must not report to themselves")
 , ("R2", "All employees that are not the department manager must report to their department manager")
 , ("R3", "Managers must report to the board member that oversees his department")
 ]
 
+RELATION isAccepted[RuleID] [PROP] MEANING "The rule with ID {{TGT}} has been accepted and therefor must be complied with"
+-- POPULATION isAccepted[RuleID*RuleID] CONTAINS
+-- [ ("B1","B1") 
+-- , ("D1","D1"), ("D2","D2"), ("D3","D3"), ("D4","D4")
+-- , ("E1","E1"), ("E2","E2"), ("E3","E3")
+-- , ("R1","R1"), ("R2","R2"), ("R3","R3")
+-- ]
+
 --[Principles: Board and organization structure]
 
 RULE "P-B1: The board must oversee all departments":
    V;isAccepted;"B1";V /\ I[Department] |- oversees~;boardMember;V
+
+RULE "P-B2: Only department managers report to board members":
+   V;isAccepted;"B2";V /\ reportsTo;boardMember |- deptManager~;V
+
+RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member.":
+   V;isAccepted;"B3";V /\ reportsTo;boardMember = V;isAccepted;"B3";V /\ (oversees;deptManager)~
 
 --[Principles: Departments]
 
