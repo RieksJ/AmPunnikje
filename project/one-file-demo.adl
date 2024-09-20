@@ -12,7 +12,7 @@ CONCEPT Function   "a job position or title that employees can hold."
 
 --[Definitions for Relations]
 
-RELATION boardMember[Person] [PROP]        MEANING "{{SRC}} is a member of the board of the organization"
+RELATION boardMember[Person] [PROP]        MEANING "{{SRC}} is a member of the board of our organization"
 RELATION oversees[Person*Department]       MEANING "{{SRC}} oversees department {{TGT}}"
 
 RELATION deptManager[Department*Person]    MEANING "{{SRC}} has {{TGT}} as its manager"
@@ -20,7 +20,7 @@ RELATION deptFunction[Department*Function] MEANING "{{SRC}} has job positions fo
 
 RELATION isQualifiedFor[Person*Function]   MEANING "{{SRC}} has been qualified to fulfill funtion {{TGT}}"
 RELATION employee[Person] [PROP]           MEANING "{{SRC}} has a working relationship/contract with our organization"
-RELATION emplDepartment[Person*Department] MEANING "{{SRC}} works in department {{TGT}} of the organization"
+RELATION emplDepartment[Person*Department] MEANING "{{SRC}} works in department {{TGT}} of our organization"
 RELATION emplFunction[Person*Function]     MEANING "{{SRC}} has been assigned the function {{TGT}}"
 RELATION reportsTo[Person*Person]          MEANING "{{SRC}} reports to {{TGT}}"
 
@@ -88,7 +88,7 @@ PURPOSE RULE "P_R3: Managers must report to the board member that oversees his d
 ------------------------------------------------
 --[FORMALIZING THE PRINCIPLES (USING AMPERSAND)]
 ------------------------------------------------
-CONCEPT Principle "a (human readable) criterion that, if accepted by the organization, must be complied with"
+CONCEPT Principle "a (human readable) criterion that, if accepted by our organization, must be complied with"
 CONCEPT RuleID "a text that identifies a particular formalization (rule) of a Principle"
 
 RELATION isAccepted[RuleID] [PROP] MEANING "The rule with ID {{TGT}} has been accepted and therefor must be complied with"

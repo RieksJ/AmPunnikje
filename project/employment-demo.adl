@@ -2,7 +2,7 @@ CONTEXT EmploymentPrincipleFormalization IN ENGLISH
 PURPOSE CONTEXT EmploymentPrincipleFormalization
 {+ This context formalizes the principles of `Employment.adl`, such that you can switch them `on` and `off`.+}
 
-CONCEPT Principle "a (human readable) criterion that, if accepted by the organization, must be complied with"
+CONCEPT Principle "a (human readable) criterion that, if accepted by our organization, must be complied with"
 CONCEPT RuleID "a text that identifies a particular formalization (rule) of a Principle"
 
 RELATION rulePrinciple[RuleID*Principle] [INJ,SUR,UNI,TOT] MEANING "{{SRC}} is an identifier for principle {{TGT}}"
