@@ -26,62 +26,62 @@ RELATION reportsTo[Person*Person]          MEANING "{{SRC}} reports to {{TGT}}"
 
 --[Principles: Board and organization structure]
 
-PURPOSE RULE "P-B1: The board must oversee all departments"
+PURPOSE RULE "B1: The board must oversee all departments"
 {+In order to be in control, every deparment must be overseen by a member of the board - no exceptions.+}
 
-PURPOSE RULE "P-B2: Only department managers report to board members"
+PURPOSE RULE "B2: Only department managers report to board members"
 {+In order to ensure the workload of board members is limited, only department managers may report to the board.+}
 
-PURPOSE RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member."
+PURPOSE RULE "B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member."
 {+Proper reporting to the board means that the board members that oversee a department will be reported to by its manager.
   Also, each such manager must report to the board member that oversees its department.+}
 
 --[Principles: Departments]
 
-PURPOSE RULE "P-D1: Departments must have precisely one manager"
+PURPOSE RULE "D1: Departments must have precisely one manager"
 {+Departments must be led/managed. The responsibility for doing so must be assigned to a single person,
 to ensure that it is always unambiguously clear who it is that bears that responsibility.+}
 
-PURPOSE RULE "P-D2: Departments must list the functions for which they have positions"
+PURPOSE RULE "D2: Departments must list the functions for which they have positions"
 {+Hiring people that can do the work in a department (a functional unit) becomes easier if sets of
   capabilities are specified (Functions) that the deparment needs to get its work done. 
   Therefore, departments should list the functions for which they have job positions.+}
 
-PURPOSE RULE "P-D3: Departments must have employees"
+PURPOSE RULE "D3: Departments must have employees"
 {+A department that doesn't have employees cannot do work.+}
 
-PURPOSE RULE "P-D4: Everyone that works for a department must be an employee (have a contract)"
+PURPOSE RULE "D4: Everyone that works for a department must be an employee (have a contract)"
 {+In order to make sure that people working in one of our organization's departments are well-behaved,
   they must be employees, which implies they have signed a contract that provides appropriate guarantees for that.+}
 
 --[Principles: Employees]
 
-PURPOSE RULE "P_E1: All employees must have one function"
+PURPOSE RULE "E1: All employees must have one function"
 {+In order to not overload employees, it has been decided that they can have at most one function.+}
 
-PURPOSE RULE "P_E2 An employee that has been assigned a function must have the associated qualifications"
+PURPOSE RULE "E2 An employee that has been assigned a function must have the associated qualifications"
 {+People should only be employed to fulfill a function if they can do the associated work.
   Therefore, it must have been established that they can do the work if they are assigned a function.+}
 
-PURPOSE RULE "P_E3: All employees must be assigned to a department for which their function is relevant"
+PURPOSE RULE "E3: All employees must be assigned to a department for which their function is relevant"
 {+In order to guarantee that people end up in a department that can use the capabilities 
   for which they are qualified, people should only be assigned to deparments that can use those.+}
 
 --[Principles: Reporting]
 
-PURPOSE RULE "P_R1: People must not report to themselves"
+PURPOSE RULE "R1: People must not report to themselves"
 {+Butchers should not judge their own meat, and similarly, people must not report to themselves.+}
 
--- PURPOSE RULE "P_R2: Employees must report to their manager"
+-- PURPOSE RULE "R2: Employees must report to their manager"
 -- {+In order not to overload people with red tape, people must report to at most one person.+}
 
-PURPOSE RULE "P_R2: All employees that are not the department manager must report to their department manager"
+PURPOSE RULE "R2: All employees that are not the department manager must report to their department manager"
 {+The easiest reporting line for employees is to report to their department manager (provided they are not the manager themselves).+}
 
--- PURPOSE RULE "P_R3: Managers must report to a member of the board"
+-- PURPOSE RULE "R3: Managers must report to a member of the board"
 -- {+To ensure that the board can oversee all departments, each manager must report to some member of the board.+}
 
-PURPOSE RULE "P_R3: Managers must report to the board member that oversees his department"
+PURPOSE RULE "R3: Managers must report to the board member that oversees his department"
 {+Since the board has decided to assign departments to its members to oversee, it makes sense 
   to have the managers of these departments report to the board member that oversees his/her department.+}
 
@@ -94,56 +94,56 @@ PURPOSE RULE "P_R3: Managers must report to the board member that oversees his d
 
 --[Principles: Board and organization structure]
 
-RULE "P-B1: The board must oversee all departments":
+RULE "B1: The board must oversee all departments":
    I[Department] |- oversees~;boardMember;V
 
-RULE "P-B2: Only department managers report to board members":
+RULE "B2: Only department managers report to board members":
    reportsTo;boardMember |- deptManager~;V
 
-RULE "P-B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member.":
+RULE "B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member.":
    reportsTo;boardMember = (oversees;deptManager)~
 
 --[Principles: Departments]
 
-RULE "P-D1: Departments must have precisely one manager":
+RULE "D1: Departments must have precisely one manager":
    I[Department] |- deptManager;deptManager~
 
-RULE "P-D2: Departments must list the functions for which they have positions":
+RULE "D2: Departments must list the functions for which they have positions":
    deptFunction |- deptFunction;-I 
 MEANING "Each department must have at least two different functions specified. It is assumed that one of them is `Manager`."
 
-RULE "P-D3: Departments must have employees":
+RULE "D3: Departments must have employees":
    I[Department] |- emplDepartment~;emplDepartment
 
-RULE "P-D4: Everyone that works for a department must be an employee (have a contract)":
+RULE "D4: Everyone that works for a department must be an employee (have a contract)":
    emplDepartment |- employee;emplDepartment
 
 --[Principles: Employees]
 
-RULE "P_E1: All employees must have one function":
+RULE "E1: All employees must have one function":
    employee |- emplFunction;emplFunction~ /\ -(emplFunction;-I;emplFunction~)
 
-RULE "P_E2 An employee that has been assigned a function must have the associated qualifications":
+RULE "E2 An employee that has been assigned a function must have the associated qualifications":
    emplFunction |- isQualifiedFor
 
-RULE "P_E3: All employees must be assigned to a department for which their function is relevant":
+RULE "E3: All employees must be assigned to a department for which their function is relevant":
    emplDepartment~;emplFunction |- deptFunction
 
 --[Principles: Reporting]
 
-RULE "P_R1: People must not report to themselves":
+RULE "R1: People must not report to themselves":
    reportsTo |- -I[Person]
 
--- RULE "P_R2: Employees must report to their manager":
+-- RULE "R2: Employees must report to their manager":
 --    emplDepartment;deptManager |- reportsTo
 
-RULE "P_R2: All employees that are not the department manager must report to their department manager":
+RULE "R2: All employees that are not the department manager must report to their department manager":
    (emplDepartment-deptManager~);deptManager |- reportsTo
 
--- RULE "P_R3: Managers must report to a member of the board":
+-- RULE "R3: Managers must report to a member of the board":
 --    deptManager~ |- reportsTo;boardMember;V
 
-RULE "P_R3: Managers must report to the board member that oversees his department":
+RULE "R3: Managers must report to the board member that oversees his department":
    (oversees;deptManager)~ |- reportsTo
 
 --#ENDIF
@@ -202,6 +202,7 @@ BOX <TABS>
    , "Other people":         I INTERFACE "Other people"
 --#IF demo
    , "Principle Acceptance": I INTERFACE "Principle Acceptance"
+   , "Principles and Fixes": I INTERFACE "Principles and Fixes"
 --#ENDIF
    ]
 
