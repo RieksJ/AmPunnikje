@@ -1,7 +1,67 @@
 CONTEXT Employment IN ENGLISH
 PURPOSE CONTEXT Employment
-{+ This context looks at the employment of people within 'Our Organization'.
-   This means that we do not consider anything outside of 'Our Organization'
+{+ The context of this exercise is `our organization`.
+ Our organization has departments, e.g. `Finance`, `Operations` and `Support`,
+ that have their own tasks. Our organization also has a board, the members of 
+ which oversee its various departments. Employees have a function within the 
+ department to which they are assigned, and for which they are qualified. 
+ Functions indicate the kinds of work that employees are primarily expected to do. 
+ Employees report to their managers, whereas managers report to the member of the board
+ that oversees their department.
+
+The above text is provided to participants of the CMMC as an exercise.
+The purpose of this exercise is to let the participants experience:
+- that properly defining concepts and relations isn't as trivial as it seems;
+- that a system that has no principles cannot work as you would want it to,
+  so principles must be defined and applied.
+- that the proper specification of a principle requires that the concepts and
+  relations on which it builds, must also be properly specified - if not, you
+  run the risk that the meaning/effects of the principle are not clear (enough);
+- what the acceptance of a (properly specified) principle has on the functioning
+  of the system, and conversly: that in order to have a system that functions
+  as you would like it to, you need to properly specify the associated principles
+- that accepting a principle means you also need to decide how it is to be 
+  enforced - as an invariant or process rule.
+- that process rules must be associated with a working instruction 
+  that specifies how violations are to be terminated
+- that a working instruction must be assigned to a Role/class of actors
+  that are capable of executing that working instruction.
+
+-- 1: Concepts and Relations
+1a. Participants must properly define concepts and relations from the above text.
+1b. The results are discussed, as well as the experiences of the participants.
+1c. The participants are provided with the Definintions for Concepts and Relations
+    as provided below. The modeling decisions can be questioned/discussed.
+1d. The participants are shown this demo, limited to the part that does not
+    contain enforceable rules.
+
+-- 2: Principles (Rules, Constraints)
+2a. Participants must use the provided definitions of Concepts and Relations
+    to express proposals for Principles:
+    - start easy, with multiplicity constraints
+    - continue with non-multiplicity constraints
+2b. The results are discussed, as well as the experiences of the participants.
+2c. The participants are provided with the set of Principles below, i.e.,
+    a set of RULEs that phrase the principles, and the motivation (PURPOSE)
+    for having them. The modeling decisions can be questioned/discussed.
+2d. The participants are shown this demo, where they now can choose to accept
+    participants as they are provided below. That will provide them with the
+    experience that principles/rules/constraints are what make applicaitons 
+    tick. They should then conclude that in order to properly define principles,
+    they need properly defined relations, and for that they need properly 
+    defined concepts.
+
+-- 3: Enforcing Principles (Fixing Violations)
+3a. Participants must decide how Principles are to be enforced, i.e., 
+    whether they are invariants or process rules. In the latter case, they
+    must devise a (short!) working instruction for fixing violations.
+3b. The results are discussed, as well as the experiences of the participants.
+3c. The participants are provided the set of Fixes that we have defined
+    for the various Principles. The modeling decisions can be questioned/discussed. 
+3d. The participants are shown this demo, where they now can also choose
+    which fixes to apply for violations of various principles. When a principle
+    for which a fix was selected no longer applies, the fix will automatically
+    also be de-activated.    
 +}
 
 --[Definitions for Concepts]
@@ -88,9 +148,7 @@ PURPOSE RULE "R3: Managers must report to the board member that oversees his dep
 ------------------------------------------------
 --[FORMALIZING THE PRINCIPLES (USING AMPERSAND)]
 ------------------------------------------------
---#IF demo
-   INCLUDE "employment-demo.adl"
---#ELSE
+--#IF formalize_principles
 
 --[Principles: Board and organization structure]
 
@@ -147,152 +205,5 @@ RULE "R3: Managers must report to the board member that oversees his department"
    (oversees;deptManager)~ |- reportsTo
 
 --#ENDIF
-
------------------------------------------
---[DEFINING INTERFACES FOR THE PROTOTYPE]
------------------------------------------
-
-INTERFACE "Board":V[ONE*Person];boardMember
-BOX <TABLE>
-   [ "Board member" : I[Person]
-   , "Oversees" : oversees
-   , "Rep. Mgrs." : reportsTo~
-   , "Qualified for": isQualifiedFor
-   ]
-
-INTERFACE "Departments":V[ONE*Department] 
-BOX <TABLE>
-   [ "Department" : I[Department]
-   , "Manager" : deptManager
-   , "Employees" : emplDepartment~
-   , "Functions" : deptFunction
-   ]
-
-INTERFACE "Functions":V[ONE*Function] 
-BOX <TABLE>
-   [ "Function" : I[Function]
-   , "Departments" : deptFunction~
-   , "Employees" : emplFunction~
-   ]
-
-INTERFACE "Employees":V[ONE*Person];employee 
-BOX <TABLE>
-   [ "Name" : I[Person]
-   , "Department" : emplDepartment
-   , "Function" : emplFunction
-   , "Reports to": reportsTo
-   , "Qualified for": isQualifiedFor
-   ]
-
-INTERFACE "Other people":V[ONE*Person] 
-BOX <TABLE>
-   [ "Name" : I[Person]
-   , "Board member?" : boardMember
-   , "Function" : emplFunction
-   , "Reports to": reportsTo 
-   , "Qualified for": isQualifiedFor
-   ]
-
-INTERFACE "My Organization": "_SESSION";V[SESSION*ONE] cRud
-BOX <TABS>
-   [ "The Board":            I INTERFACE "Board"
-   , "Departments":          I INTERFACE "Departments"
-   , "Functions":            I INTERFACE "Functions"
-   , "Employees":            I INTERFACE "Employees"
-   , "Other people":         I INTERFACE "Other people"
---#IF demo
-   , "Principle Acceptance": I INTERFACE "Principle Acceptance"
-   , "Principles and Fixes": I INTERFACE "Principles and Fixes"
---#ENDIF
-   ]
-
-------------------------------------------------
---[SPECIFYING A TEST POPULATION]
-------------------------------------------------
-
---[The Board]
-
-POPULATION boardMember[Person*Person] CONTAINS
-   [ ("Boris", "Boris"), ("Birgit", "Birgit"), ("Bram", "Bram") ]
-
-POPULATION oversees[Person*Department] CONTAINS
-   [ ("Boris", "Finance")
-   , ("Birgit", "Operations")
-   , ("Bram", "Support") 
-   ]
-
---[Departments]
-
-POPULATION deptManager[Department*Person] CONTAINS
-   [ ("Finance","Alice")
-   , ("Operations","Darryl")
-   , ("Support","George")
-   ]
-
-POPULATION deptFunction[Department*Function] CONTAINS
-   [ ("Finance","Manager"), ("Finance","Controller"), ("Finance","Administrator")
-   , ("Operations","Manager"), ("Operations","Operator")
-   , ("Support","Manager"), ("Support","Support engineer")
-   ]
-
---[Employees]
-
-POPULATION employee[Person*Person] CONTAINS
-   [ ("Alice","Alice")
-   , ("Bob","Bob")
-   , ("Charlie","Charlie")
-   , ("Darryl","Darryl") 
-   , ("Evert","Evert")
-   , ("Flora","Flora")
-   , ("George","George")
-   , ("Harry","Harry")
-   ]
-
-POPULATION emplDepartment[Person*Department] CONTAINS
-   [ ("Alice","Finance")
-   , ("Bob","Finance")
-   , ("Charlie","Finance")
-   , ("Darryl","Operations")
-   , ("Evert","Operations")
-   , ("Flora","Operations")
-   , ("George","Support")
-   , ("Harry","Support")
-   ]
-
-POPULATION isQualifiedFor[Person*Function] CONTAINS
-   [ ("Alice","Manager"), ("Alice","Controller"), ("Alice","Administrator")
-   , ("Bob","Controller"), ("Bob","Administrator")
-   , ("Charlie","Administrator")
-   , ("Darryl","Manager"), ("Darryl","Operator")
-   , ("Evert","Operator")
-   , ("Flora", "Operator")
-   , ("George","Manager"), ("George","Controller")
-   , ("Harry","Support engineer"), ("Harry","Operator")
-   , ("Irene","Manager"), ("Irene","Controller")
-   , ("John","Operator"), ("John","Support Engineer")
-   , ("Karel","CISO"), ("Karel","Security Officer")
-   ]
-
-POPULATION emplFunction[Person*Function] CONTAINS
-   [ ("Alice","Manager")
-   , ("Bob","Controller")
-   , ("Charlie","Administrator")
-   , ("Darryl","Manager")
-   , ("Evert","Operator")
-   , ("Flora", "Operator")
-   , ("George","Manager")
-   , ("Harry","Support engineer")
-   ]
-
-POPULATION reportsTo[Person*Person] CONTAINS
-   [ ("Alice","Boris")
-   , ("Bob","Alice")
-   , ("Charlie","Alice")
-   , ("Darryl","Birgit")
-   , ("Evert","Darryl")
-   , ("Flora", "Darryl")
-   , ("George","Bram")
-   , ("Harry","George")
-   ]
 
 ENDCONTEXT

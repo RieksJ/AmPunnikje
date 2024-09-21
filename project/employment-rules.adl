@@ -1,0 +1,188 @@
+CONTEXT EmploymentPrincipleFormalization IN ENGLISH
+PURPOSE CONTEXT EmploymentPrincipleFormalization
+{+ This context formalizes the principles of `Employment.adl`, such that you can switch them `on` and `off`.+}
+
+CONCEPT Criterion "a (human readable) criterion that, if accepted by our organization, must be complied with"
+CONCEPT Principle "a text that identifies a particular formalization (rule) of a Criterion"
+
+RELATION pCrit[Principle*Criterion] [INJ,SUR,UNI,TOT] MEANING "Complying with {{SRC}} means that {{TGT}} is always satisfied."
+RELATION pAccepted[Principle] [PROP] MEANING "Principle {{SRC}} has been accepted and therefore must be complied with."
+
+POPULATION pCrit[Principle*Criterion] CONTAINS
+[ ("B1", "The board must oversee all departments")
+, ("B2", "Only department managers report to board members")
+, ("B3", "Only the managers of departments that are overseen by a particular board member may, and must report to that board member.")
+, ("D1", "Departments must have precisely one manager")
+, ("D2", "Departments must list the functions for which they have positions")
+, ("D3", "Departments must have employees")
+, ("D4", "Everyone that works for a department must be an employee (have a contract)")
+, ("E1", "All employees must have one function")
+, ("E2", "An employee that has been assigned a function must have the associated qualifications")
+, ("E3", "All employees must be assigned to a department for which their function is relevant")
+, ("R1", "People must not report to themselves")
+, ("R2", "All employees that are not the department manager must report to their department manager")
+, ("R3", "Managers must report to the board member that oversees his department")
+]
+
+--[Fixes: Instructions for automatically fixing violations of Priniples]
+
+CONCEPT Fix "a working instruction that exists for the purpose of fixing violations of a Principle."
+RELATION fixPrinciple[Fix*Principle] [TOT] MEANING "{{SRC}} exists for the purpose of fixing violations of {{TGT}}."
+RELATION fixInstr[Fix*Text] [UNI,TOT] MEANING "Violations of the principle associated with {{SRC}} is done by doing what {{TGT}} states."
+
+RELATION fAccepted[Fix] [PROP] MEANING "Fix {{SRC}} has been accepted, and therefore will be used to fix violations of the associated Principle."
+ENFORCE fAccepted :< fixPrinciple;pAccepted;fixPrinciple~ -- MAINTAIN: fAccepted |- fixPrinciple;pAccepted;fixPrinciple~
+
+--[Principles and Fixes: Board and organization structure]
+
+RULE "B1: The board must oversee all departments":
+   V;pAccepted;"B1";V /\ I[Department] |- oversees~;boardMember;V
+
+POPULATION fixPrinciple CONTAINS [ ("B1-fix","B1") ]
+POPULATION fixInstr CONTAINS [ ("B1-fix","The Board must decide which of its members is to oversee its departments.") ]
+ROLE Boardmember MAINTAINS "B1-fix"   RULE "B1-fix":
+   V;fAccepted;"B1-fix";V /\ I[Department] |- oversees~;boardMember;V
+   VIOLATION (TXT "The Board must decide which of its members is to oversee department ", SRC I)
+
+-----
+RULE "B2: Only department managers report to board members":
+   V;pAccepted;"B2";V /\ reportsTo;boardMember |- deptManager~;V
+
+POPULATION fixPrinciple CONTAINS [ ("B2-fix","B2") ]
+POPULATION fixInstr CONTAINS [ ("B2-fix","Automatically remove the reporting relation between non-managers and board members") ]
+ROLE ExecEngine MAINTAINS "B2-fix"   RULE "B2-fix": 
+   V;fAccepted;"B2-fix";V /\ reportsTo;boardMember |- deptManager~;V
+   VIOLATION (TXT "{EX} DelPair;reportsTo;Person;", SRC I, TXT ";Person;", SRC reportsTo;boardMember)
+
+-----
+RULE "B3: Only the managers of departments that are overseen by a particular board member may, and must report to that board member.":
+   V;pAccepted;"B3";V /\ reportsTo;boardMember = V;pAccepted;"B3";V /\ (oversees;deptManager)~
+
+POPULATION fixPrinciple CONTAINS [ ("B3-a","B3") ]
+POPULATION fixInstr CONTAINS [ ("B3-a","Automatically ensure that department managers report to the board member that oversees that department.") ]
+ROLE ExecEngine MAINTAINS "B3-a"   RULE "B3-a":
+   V;fAccepted;"B3-a";V /\ deptManager~;oversees~;boardMember~ |- reportsTo
+   VIOLATION (TXT "{EX} InsPair;reportsTo;Person;", SRC I, TXT ";Person;", TGT I)
+
+POPULATION fixPrinciple CONTAINS [ ("B3-b","B3") ]
+POPULATION fixInstr CONTAINS [ ("B3-b","Automatically terminate the reporting duty of a person to the board when (s)he no longer manages a department.") ]
+ROLE ExecEngine MAINTAINS "B3-b"   RULE "B3-b":
+   V;fAccepted;"B3-b";V /\ reportsTo;boardMember |- reportsTo
+   VIOLATION (TXT "{EX} DelPair;reportsTo;Person;", SRC I, TXT ";Person;", TGT I)
+
+--[Principles and Fixes: Departments]
+
+RULE "D1: Departments must have precisely one manager":
+   V;pAccepted;"D1";V /\ I[Department] |- deptManager;deptManager~
+
+POPULATION fixPrinciple CONTAINS [ ("D1-fix1","D1") ]
+POPULATION fixInstr CONTAINS [ ("D1-fix1","The Board must appoint one manager to each department.") ]
+ROLE Boardmember MAINTAINS "D1-fix1"   RULE "D1-fix1":
+   V;fAccepted;"D1-fix1";V /\ I[Department] |- deptManager;deptManager~
+   VIOLATION (TXT "The Board must appoint a manager to department ", SRC I)
+
+POPULATION fixPrinciple CONTAINS [ ("D1-fix2","D1") ]
+POPULATION fixInstr CONTAINS [ ("D1-fix2","The Board must appoint one manager to each department.") ]
+ROLE Boardmember MAINTAINS "D1-fix2"   RULE "D1-fix2":
+   V;fAccepted;"D1-fix2";V /\ deptManager~;deptManager |- I[Person]
+   VIOLATION (TXT "The Board must choose between ", SRC I, TXT " and ", TGT I
+             ,TXT " as the manager of department ", SRC deptManager~ )
+
+-----
+RULE "D2: Departments must list the functions for which they have positions":
+   V;pAccepted;"D2";V /\ deptFunction |- deptFunction;-I 
+MEANING "Each department must have at least two different functions specified. It is assumed that one of them is `Manager`."
+
+POPULATION fixPrinciple CONTAINS [ ("D2-fix1","D2") ]
+POPULATION fixInstr CONTAINS [ ("D2-fix1","Department managers must list the functions for which there are positions in their department.") ]
+ROLE DeptManager MAINTAINS "D2-fix1"   RULE "D2-fix1":
+   V;fAccepted;"D2-fix1";V /\ deptFunction |- deptFunction;-I 
+   VIOLATION (TXT "The manager of department ", SRC I,TXT " must list the functions for which the department has positions.")
+
+-----
+RULE "D3: Departments must have employees":
+   V;pAccepted;"D3";V /\ I[Department] |- emplDepartment~;emplDepartment
+
+POPULATION fixPrinciple CONTAINS [ ("D3-fix1","D3") ]
+POPULATION fixInstr CONTAINS [ ("D3-fix1","Department managers must hire employees to work in their departments.") ]
+ROLE DeptManager MAINTAINS "D3-fix1"   RULE "D3-fix1":
+   V;fAccepted;"D3-fix1";V /\ I[Department] |- emplDepartment~;emplDepartment
+   VIOLATION (TXT "The manager of department ", SRC I, TXT " must hier employees to work in its department.")
+
+POPULATION fixPrinciple CONTAINS [ ("D3-fix2","D3") ]
+POPULATION fixInstr CONTAINS [ ("D3-fix2","The HRM department must hire employees to work in their departments.") ]
+ROLE HRMployee MAINTAINS "D3-fix2"   RULE "D3-fix2":
+   V;fAccepted;"D3-fix2";V /\ I[Department] |- emplDepartment~;emplDepartment
+   VIOLATION (TXT "The HRM department must hire employees to work in department ", SRC I)
+
+POPULATION fixPrinciple CONTAINS [ ("D3-fix3","D3") ]
+POPULATION fixInstr CONTAINS [ ("D3-fix3","The board must hire employees for unstaffed departments.") ]
+ROLE Boardmember MAINTAINS "D3-fix3"   RULE "D3-fix3":
+   V;fAccepted;"D3-fix3";V /\ I[Department] |- emplDepartment~;emplDepartment
+   VIOLATION (TXT "The board must hire employees to work in department ", SRC I)
+
+-----
+RULE "D4: Everyone that works for a department must be an employee (have a contract)":
+   V;pAccepted;"D4";V /\ emplDepartment |- employee;emplDepartment
+
+POPULATION fixPrinciple CONTAINS [ ("D4-fix1","D4") ]
+POPULATION fixInstr CONTAINS [ ("D4-fix1","Department managers must ensure that people that work for their department get a contract.") ]
+ROLE DeptManager MAINTAINS "D4-fix1"   RULE "D4-fix1":
+   V;fAccepted;"D4-fix1";V /\ emplDepartment |- employee;emplDepartment
+   VIOLATION (TXT "The manager of department ", TGT I
+             ,TXT " (i.e., ", TGT deptManager 
+             ,TXT "), must ensure that ", SRC I
+             ,TXT " gets a contract.")
+
+--[Principles and Fixes: Employees]
+
+RULE "E1: All employees must have one function":
+   V;pAccepted;"E1";V /\ employee |- emplFunction;emplFunction~ /\ -(emplFunction;-I;emplFunction~)
+
+-----
+RULE "E2 An employee that has been assigned a function must have the associated qualifications":
+   V;pAccepted;"E2";V /\ emplFunction |- isQualifiedFor
+
+POPULATION fixPrinciple CONTAINS [ ("E2-fix","E2") ]
+POPULATION fixInstr CONTAINS [ ("E2-fix","Automatically relieve an employee from a function if he does not have, or loses the required qualification for that function.") ]
+ROLE ExecEngine MAINTAINS "E2-fix"   RULE "E2-fix": 
+   V;fAccepted;"E2-fix";V /\ emplFunction |- isQualifiedFor
+   VIOLATION (TXT "{EX} DelPair;emplFunction;Person;", SRC I, TXT ";Function;", TGT I)
+
+-----
+RULE "E3: All employees must be assigned to a department for which their function is relevant":
+   V;pAccepted;"E3";V /\ emplDepartment~;emplFunction |- deptFunction
+
+--[Principles and Fixes: Reporting]
+
+RULE "R1: People must not report to themselves":
+   V;pAccepted;"R1";V /\ reportsTo |- -I[Person]
+
+-- RULE "R2: Employees must report to their manager":
+--    emplDepartment;deptManager |- reportsTo
+
+RULE "R2: All employees that are not the department manager must report to their department manager":
+   V;pAccepted;"R2";V /\ (emplDepartment-deptManager~);deptManager |- reportsTo
+
+POPULATION fixPrinciple CONTAINS [ ("R2-a","R2") ]
+POPULATION fixInstr CONTAINS [ ("R2-a","Automatically ensure that employees report to their department managers.") ]
+ROLE ExecEngine MAINTAINS "R2-a"   RULE "R2-a":
+   V;fAccepted;"R2-a";V /\ (emplDepartment-deptManager~);deptManager |- reportsTo
+   VIOLATION (TXT "{EX} InsPair;reportsTo;Person;", SRC I, TXT ";Person;", TGT I)
+
+POPULATION fixPrinciple CONTAINS [ ("R2-b","R2") ]
+POPULATION fixInstr CONTAINS [ ("R2-b","Automatically terminate the reporting duty of a person to a department manager when that person is no longer assigned to that department.") ]
+ROLE ExecEngine MAINTAINS "R2-b"   RULE "R2-b":
+   V;fAccepted;"R2-b";V /\ reportsTo |- (emplDepartment-deptManager~);deptManager
+   VIOLATION (TXT "{EX} DelPair;reportsTo;Person;", SRC I, TXT ";Person;", TGT I)
+
+-- RULE "R3: Managers must report to a member of the board":
+--    deptManager~ |- reportsTo;boardMember;V
+
+RULE "R3: Managers must report to the board member that oversees his department":
+   V;pAccepted;"R3";V /\ (oversees;deptManager)~ |- reportsTo
+
+POPULATION fixPrinciple CONTAINS [ ("B3-a","R3") ]
+POPULATION fixPrinciple CONTAINS [ ("B3-b","R3") ]
+
+ENDCONTEXT

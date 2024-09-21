@@ -1,0 +1,88 @@
+CONTEXT EmploymentPopulation IN ENGLISH
+
+--[The Board]
+
+POPULATION boardMember[Person*Person] CONTAINS
+   [ ("Boris", "Boris"), ("Birgit", "Birgit"), ("Bram", "Bram") ]
+
+POPULATION oversees[Person*Department] CONTAINS
+   [ ("Boris", "Finance")
+   , ("Birgit", "Operations")
+   , ("Bram", "Support") 
+   ]
+
+--[Departments]
+
+POPULATION deptManager[Department*Person] CONTAINS
+   [ ("Finance","Alice")
+   , ("Operations","Darryl")
+   , ("Support","George")
+   ]
+
+POPULATION deptFunction[Department*Function] CONTAINS
+   [ ("Finance","Manager"), ("Finance","Controller"), ("Finance","Administrator")
+   , ("Operations","Manager"), ("Operations","Operator")
+   , ("Support","Manager"), ("Support","Support engineer")
+   ]
+
+--[Employees]
+
+POPULATION employee[Person*Person] CONTAINS
+   [ ("Alice","Alice")
+   , ("Bob","Bob")
+   , ("Charlie","Charlie")
+   , ("Darryl","Darryl") 
+   , ("Evert","Evert")
+   , ("Flora","Flora")
+   , ("George","George")
+   , ("Harry","Harry")
+   ]
+
+POPULATION emplDepartment[Person*Department] CONTAINS
+   [ ("Alice","Finance")
+   , ("Bob","Finance")
+   , ("Charlie","Finance")
+   , ("Darryl","Operations")
+   , ("Evert","Operations")
+   , ("Flora","Operations")
+   , ("George","Support")
+   , ("Harry","Support")
+   ]
+
+POPULATION isQualifiedFor[Person*Function] CONTAINS
+   [ ("Alice","Manager"), ("Alice","Controller"), ("Alice","Administrator")
+   , ("Bob","Controller"), ("Bob","Administrator")
+   , ("Charlie","Administrator")
+   , ("Darryl","Manager"), ("Darryl","Operator")
+   , ("Evert","Operator")
+   , ("Flora", "Operator")
+   , ("George","Manager"), ("George","Controller")
+   , ("Harry","Support engineer"), ("Harry","Operator")
+   , ("Irene","Manager"), ("Irene","Controller")
+   , ("John","Operator"), ("John","Support Engineer")
+   , ("Karel","CISO"), ("Karel","Security Officer")
+   ]
+
+POPULATION emplFunction[Person*Function] CONTAINS
+   [ ("Alice","Manager")
+   , ("Bob","Controller")
+   , ("Charlie","Administrator")
+   , ("Darryl","Manager")
+   , ("Evert","Operator")
+   , ("Flora", "Operator")
+   , ("George","Manager")
+   , ("Harry","Support engineer")
+   ]
+
+POPULATION reportsTo[Person*Person] CONTAINS
+   [ ("Alice","Boris")
+   , ("Bob","Alice")
+   , ("Charlie","Alice")
+   , ("Darryl","Birgit")
+   , ("Evert","Darryl")
+   , ("Flora", "Darryl")
+   , ("George","Bram")
+   , ("Harry","George")
+   ]
+
+ENDCONTEXT

@@ -1,0 +1,84 @@
+CONTEXT EmploymentInterfaces IN ENGLISH
+
+INTERFACE "My Organization": "_SESSION";V[SESSION*ONE] cRud
+BOX <TABS>
+   [ "The Board":   I INTERFACE "Board"
+   , "Departments": I INTERFACE "Departments"
+   , "Functions":   I INTERFACE "Functions"
+   , "Employees":   I INTERFACE "Employees"
+   , "People":      I INTERFACE "People"
+   , "Principles":  I INTERFACE "Principles and Fixes"
+   ]
+
+INTERFACE "Board": V[ONE*Person];boardMember cRud
+BOX <TABLE>
+   [ "Board member" : I[Person]
+   , "Oversees" : oversees
+   , "Rep. Mgrs." : reportsTo~
+   , "Qualified for": isQualifiedFor
+   ]
+
+INTERFACE "Departments": V[ONE*Department] cRud
+BOX <TABLE>
+   [ "Department" : I[Department]
+   , "Manager" : deptManager
+   , "Employees" : emplDepartment~
+   , "Functions" : deptFunction
+   ]
+
+INTERFACE "Functions": V[ONE*Function] cRud
+BOX <TABLE>
+   [ "Function" : I[Function]
+   , "Departments" : deptFunction~
+   , "Employees" : emplFunction~
+   ]
+
+INTERFACE "Employees": V[ONE*Person];employee cRud 
+BOX <TABLE>
+   [ "Name" : I[Person]
+   , "Department" : emplDepartment
+   , "Function" : emplFunction
+   , "Reports to": reportsTo
+   , "Qualified for": isQualifiedFor
+   ]
+
+INTERFACE "People": V[ONE*Person] cRud 
+BOX <TABLE>
+   [ "Name" : I[Person]
+   , "Board member?" : boardMember
+   , "Function" : emplFunction
+   , "Reports to": reportsTo 
+   , "Qualified for": isQualifiedFor
+   ]
+
+
+INTERFACE "Principles": V[ONE*Principle] cRud
+BOX<TABLE>
+   [ "Accept?": pAccepted cRUd
+   , "ID": I[Principle]   cRud
+   , "Criterion": pCrit   cRud
+   ]
+
+-- Ensure that `fAccepted` is reset when the corresponding `pAccepted` is made false
+ENFORCE fAccepted :< fixPrinciple;pAccepted;fixPrinciple~
+
+INTERFACE "Principles and Fixes": V[ONE*Principle] cRud
+   BOX<RAW form>
+   [ "Principle": I[Principle] cRud 
+      BOX<RAW table>
+      [ "Accepted?": pAccepted cRUd
+      , "ID": I[Principle]     cRud
+      , "colon": TXT ":&nbsp;"
+      , "Criterion": pCrit     cRud
+      ]
+   , "Fix(es)": pAccepted;fixPrinciple~  cRud 
+      BOX<RAW table>
+      [ "Spaces": TXT "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+      , "Accepted?": fAccepted cRUd
+      , "ID": I[Fix]           cRud
+      , "colon": TXT ":&nbsp;"
+      , "Criterion": fixInstr  cRud
+      ]
+   ]
+
+ENDCONTEXT
