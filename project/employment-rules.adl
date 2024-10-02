@@ -76,7 +76,7 @@ RULE "D1: Departments must have precisely one manager":
    V;pAccepted;"D1";V /\ I[Department] |- deptManager;deptManager~
 
 POPULATION fixPrinciple CONTAINS [ ("D1-fix1","D1") ]
-POPULATION fixInstr CONTAINS [ ("D1-fix1","The Board must appoint a manager to every department that doesn't have one.") ]
+POPULATION fixInstr CONTAINS [ ("D1-fix1","The Board must appoint a manager to every department that has no manager.") ]
 ROLE Boardmember MAINTAINS "D1-fix1"   RULE "D1-fix1":
    V;fAccepted;"D1-fix1";V /\ I[Department] |- deptManager;deptManager~
    VIOLATION (TXT "The Board must appoint a manager to department ", SRC I)
