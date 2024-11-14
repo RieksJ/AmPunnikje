@@ -1,3 +1,6 @@
 CONTEXT Employment IN ENGLISH
-INCLUDE "employment.adl" --# [ "demo"]
+INCLUDE "employment.adl"
+INCLUDE "employment-rules.adl"
+INCLUDE "employment.ifc"
+INCLUDE "employment.pop"
 ENDCONTEXT
